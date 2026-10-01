@@ -2,6 +2,12 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 
+// CORS para payagan ang HTML client mo na kumonekta
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  next();
+});
+
 app.get('/download', async (req, res) => {
   const targetUrl = req.query.url;
   if (!targetUrl) {
@@ -9,16 +15,16 @@ app.get('/download', async (req, res) => {
   }
 
   try {
-    // Kinukuha ng Node.js server ang file mula sa totoong source nang may napakabilis na cloud bandwidth
     const response = await axios({
       method: 'GET',
       url: targetUrl,
       responseType: 'stream'
     });
 
-    // Ipinapasa agad sa user nang may mabilis na daloy
-    response.headers['content-disposition'] && res.setHeader('content-disposition', response.headers['content-disposition']);
-    res.setHeader('content-type', response.headers['content-type'] || 'application/octet-stream');
+    if (response.headers['content-disposition']) {
+      res.setHeader('content-disposition', response.headers['content-disposition']);
+    }
+    res.setHeader('content-type', response.headers['content-type'] || 'application/vnd.android.package-archive');
     
     response.data.pipe(res);
   } catch (error) {
@@ -30,3 +36,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+      
